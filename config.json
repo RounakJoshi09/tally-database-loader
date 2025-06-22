@@ -1,20 +1,31 @@
 {
     "database": {
-        "technology": "mssql",
-        "server": "localhost",
-        "port": 0,
+        "technology": "mysql",
+        "server": "127.0.0.1",
+        "port": 3307,
         "ssl": false,
-        "schema": "tallydb",
-        "username": "sa",
-        "password": "admin",
-        "loadmethod": "file"
+        "schema": "tally",
+        "username": "root",
+        "password": "EHg=2?<mPK&$hra.",
+        "loadmethod": "insert",
+        "ssh_tunnel": {
+            "enabled": true,
+            "host": "128.199.27.171",
+            "port": 22,
+            "username": "root",
+            "password": "",
+            "privateKey": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACCsXa/5LjAdRh8AeSwDGKB+lBw8oUovZwqpsDzcM56JmgAAAKA1N5quNTea\nrgAAAAtzc2gtZWQyNTUxOQAAACCsXa/5LjAdRh8AeSwDGKB+lBw8oUovZwqpsDzcM56Jmg\nAAAEBxlL15mTrNU7Xxd3mtroChv2gWcLFUiJ4GPwxVvhnw9qxdr/kuMB1GHwB5LAMYoH6U\nHDyhSi9nCqmwPNwznomaAAAAG0F6dXJlQUQrUm91bmFrSm9zaGlAUm91bmFrSgEC\n-----END OPENSSH PRIVATE KEY-----",
+            "localPort": 3307,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 3306
+        }
     },
     "tally": {
         "definition": "tally-export-config.yaml",
         "server": "localhost",
         "port": 9000,
-        "fromdate": "2024-04-01",
-        "todate": "2025-03-31",
+        "fromdate": "2025-04-01",
+        "todate": "2026-03-31",
         "sync": "full",
         "frequency": 0,
         "company": ""

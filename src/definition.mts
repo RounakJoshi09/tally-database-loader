@@ -1,88 +1,112 @@
 interface connectionConfig {
-    technology: string;
-    server: string;
+  technology: string;
+  server: string;
+  port: number;
+  schema: string;
+  ssl: boolean;
+  username: string;
+  password: string;
+  loadmethod: string;
+  ssh_tunnel?: {
+    enabled: boolean;
+    host: string;
     port: number;
-    schema: string;
-    ssl: boolean;
     username: string;
-    password: string;
-    loadmethod: string;
+    password?: string;
+    privateKey?: string;
+    localPort: number;
+    remoteHost: string;
+    remotePort: number;
+  };
 }
 
 interface queryResult {
-    rowCount: number;
-    data: any[];
+  rowCount: number;
+  data: any[];
 }
 
 interface tallyConfig {
-    definition: string;
-    server: string;
-    port: number;
-    fromdate: string; // [ YYYYMMDD / auto ]
-    todate: string; // [ YYYYMMDD / auto ]
-    sync: string; // [ full / incremental ]
-    frequency: number; // in minutes
-    company: string;
+  definition: string;
+  server: string;
+  port: number;
+  fromdate: string; // [ YYYYMMDD / auto ]
+  todate: string; // [ YYYYMMDD / auto ]
+  sync: string; // [ full / incremental ]
+  frequency: number; // in minutes
+  company: string;
 }
 
 interface fieldConfigYAML {
-    name: string;
-    field: string;
-    type: string;
+  name: string;
+  field: string;
+  type: string;
 }
 
 interface tableFieldYAML {
-    table: string;
-    field: string;
+  table: string;
+  field: string;
 }
 
 interface tableConfigYAML {
-    name: string;
-    collection: string;
-    nature: string;
-    fields: fieldConfigYAML[];
-    filters?: string[];
-    fetch?: string[];
-    cascade_update?: tableFieldYAML[];
-    cascade_delete?: tableFieldYAML[];
+  name: string;
+  collection: string;
+  nature: string;
+  fields: fieldConfigYAML[];
+  filters?: string[];
+  fetch?: string[];
+  cascade_update?: tableFieldYAML[];
+  cascade_delete?: tableFieldYAML[];
 }
 
 interface databaseFieldInfo {
-    fieldName: string;
-    dataType: string;
-    isNullable: boolean;
-    length?: number;
-    precision?: number;
-    scale?: number;
+  fieldName: string;
+  dataType: string;
+  isNullable: boolean;
+  length?: number;
+  precision?: number;
+  scale?: number;
 }
 
 interface cdmFileFormatSetting {
-    $type: string;
-    columnHeaders: boolean;
+  $type: string;
+  columnHeaders: boolean;
 }
 
 interface cdmAttribute {
-    name: string;
-    dataType: string;
+  name: string;
+  dataType: string;
 }
 
 interface cdmPartition {
-    name: string;
-    location: string;
-    fileFormatSettings: cdmFileFormatSetting;
+  name: string;
+  location: string;
+  fileFormatSettings: cdmFileFormatSetting;
 }
 
 interface cdmEntity {
-    $type: string;
-    name: string;
-    attributes: cdmAttribute[];
-    partitions: cdmPartition[];
+  $type: string;
+  name: string;
+  attributes: cdmAttribute[];
+  partitions: cdmPartition[];
 }
 
 interface cdmModel {
-    name: string;
-    version: string;
-    entities: cdmEntity[];
+  name: string;
+  version: string;
+  entities: cdmEntity[];
 }
 
-export { connectionConfig, queryResult, tallyConfig, fieldConfigYAML, tableFieldYAML, tableConfigYAML, databaseFieldInfo, cdmModel, cdmEntity, cdmPartition, cdmAttribute, cdmFileFormatSetting };
+export {
+  connectionConfig,
+  queryResult,
+  tallyConfig,
+  fieldConfigYAML,
+  tableFieldYAML,
+  tableConfigYAML,
+  databaseFieldInfo,
+  cdmModel,
+  cdmEntity,
+  cdmPartition,
+  cdmAttribute,
+  cdmFileFormatSetting,
+};

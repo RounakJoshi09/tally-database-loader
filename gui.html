@@ -61,6 +61,21 @@
             document.getElementById('tally_sync').disabled = !state;
         }
 
+        function toggleSSHTunnelInputs(state = true) {
+            document.getElementById('ssh_host').disabled = !state;
+            document.getElementById('ssh_port').disabled = !state;
+            document.getElementById('ssh_username').disabled = !state;
+            document.getElementById('ssh_password').disabled = !state;
+            document.getElementById('ssh_private_key').disabled = !state;
+            document.getElementById('ssh_local_port').disabled = !state;
+            document.getElementById('ssh_remote_host').disabled = !state;
+            document.getElementById('ssh_remote_port').disabled = !state;
+        }
+
+        function ssh_tunnel_enabled_onchange(e) {
+            toggleSSHTunnelInputs(e.checked);
+        }
+
         function showhideTallyDatabasePanel(state = true) {
             document.getElementById('pnlDatabase').hidden = !state;
             document.getElementById('pnlTally').hidden = !state;
@@ -94,6 +109,45 @@
             let tallyFrequency = parseInt(document.getElementById('tally_sync').value);
             let tallyCompany = document.getElementById('tally_company').value;
 
+            // SSH Tunnel configuration
+            let sshEnabled = document.getElementById('ssh_tunnel_enabled').checked === true;
+            let sshHost = document.getElementById('ssh_host').value;
+            let sshPort = parseInt(document.getElementById('ssh_port').value);
+            let sshUsername = document.getElementById('ssh_username').value;
+            let sshPassword = document.getElementById('ssh_password').value;
+            let sshPrivateKey = document.getElementById('ssh_private_key').value;
+            let sshLocalPort = parseInt(document.getElementById('ssh_local_port').value);
+            let sshRemoteHost = document.getElementById('ssh_remote_host').value;
+            let sshRemotePort = parseInt(document.getElementById('ssh_remote_port').value);
+
+            // Format private key properly if provided
+            if (sshPrivateKey && sshPrivateKey.trim() !== '') {
+                // Ensure the private key has proper line breaks
+                let formattedKey = sshPrivateKey.trim();
+                
+                // If the key doesn't have line breaks, try to format it
+                if (!formattedKey.includes('\n')) {
+                    // Check if it's an OpenSSH private key
+                    if (formattedKey.includes('-----BEGIN OPENSSH PRIVATE KEY-----')) {
+                        const header = '-----BEGIN OPENSSH PRIVATE KEY-----';
+                        const footer = '-----END OPENSSH PRIVATE KEY-----';
+                        
+                        // Extract the key content
+                        let keyContent = formattedKey.replace(header, '').replace(footer, '').trim();
+                        
+                        // Add line breaks every 64 characters
+                        const chunks = [];
+                        for (let i = 0; i < keyContent.length; i += 64) {
+                            chunks.push(keyContent.slice(i, i + 64));
+                        }
+                        
+                        formattedKey = `${header}\n${chunks.join('\n')}\n${footer}`;
+                    }
+                }
+                
+                sshPrivateKey = formattedKey;
+            }
+
             objConfig = {
                 database: {
                     technology: databaseTechnology,
@@ -116,6 +170,21 @@
                     company: tallyCompany
                 }
             };
+
+            // Add SSH tunnel configuration if enabled
+            if (sshEnabled) {
+                objConfig.database.ssh_tunnel = {
+                    enabled: sshEnabled,
+                    host: sshHost,
+                    port: isNaN(sshPort) ? 22 : sshPort,
+                    username: sshUsername,
+                    password: sshPassword,
+                    privateKey: sshPrivateKey,
+                    localPort: isNaN(sshLocalPort) ? 3307 : sshLocalPort,
+                    remoteHost: sshRemoteHost,
+                    remotePort: isNaN(sshRemotePort) ? 3306 : sshRemotePort
+                };
+            }
 
             return objConfig;
         }
@@ -159,6 +228,32 @@
                 }
             }
             else;
+
+            // SSH Tunnel validation
+            if (objConfig['database']['ssh_tunnel'] && objConfig['database']['ssh_tunnel']['enabled']) {
+                let sshConfig = objConfig['database']['ssh_tunnel'];
+                if (sshConfig['host'] == '') {
+                    retval += 'SSH Host cannot be empty\r\n';
+                }
+                if (sshConfig['port'] < 1 || sshConfig['port'] > 65535) {
+                    retval += 'SSH Port value is invalid\r\n';
+                }
+                if (sshConfig['username'] == '') {
+                    retval += 'SSH Username cannot be empty\r\n';
+                }
+                if (sshConfig['password'] == '' && sshConfig['privateKey'] == '') {
+                    retval += 'Either SSH Password or Private Key must be provided\r\n';
+                }
+                if (sshConfig['localPort'] < 1 || sshConfig['localPort'] > 65535) {
+                    retval += 'SSH Local Port value is invalid\r\n';
+                }
+                if (sshConfig['remoteHost'] == '') {
+                    retval += 'SSH Remote Host cannot be empty\r\n';
+                }
+                if (sshConfig['remotePort'] < 1 || sshConfig['remotePort'] > 65535) {
+                    retval += 'SSH Remote Port value is invalid\r\n';
+                }
+            }
 
             if (objConfig['tally']['server'] == '') {
                 retval += 'Tally server cannot be empty\r\n';
@@ -259,6 +354,31 @@
                 document.getElementById('database_ssl_false').checked = true;
             }
 
+            // SSH Tunnel configuration
+            if (respData.database.ssh_tunnel) {
+                document.getElementById('ssh_tunnel_enabled').checked = respData.database.ssh_tunnel.enabled || false;
+                document.getElementById('ssh_host').value = respData.database.ssh_tunnel.host || '';
+                document.getElementById('ssh_port').value = parseInt(respData.database.ssh_tunnel.port) || 22;
+                document.getElementById('ssh_username').value = respData.database.ssh_tunnel.username || '';
+                document.getElementById('ssh_password').value = respData.database.ssh_tunnel.password || '';
+                document.getElementById('ssh_private_key').value = respData.database.ssh_tunnel.privateKey || '';
+                document.getElementById('ssh_local_port').value = parseInt(respData.database.ssh_tunnel.localPort) || 3307;
+                document.getElementById('ssh_remote_host').value = respData.database.ssh_tunnel.remoteHost || 'localhost';
+                document.getElementById('ssh_remote_port').value = parseInt(respData.database.ssh_tunnel.remotePort) || 3306;
+                toggleSSHTunnelInputs(respData.database.ssh_tunnel.enabled || false);
+            } else {
+                document.getElementById('ssh_tunnel_enabled').checked = false;
+                document.getElementById('ssh_host').value = '';
+                document.getElementById('ssh_port').value = 22;
+                document.getElementById('ssh_username').value = '';
+                document.getElementById('ssh_password').value = '';
+                document.getElementById('ssh_private_key').value = '';
+                document.getElementById('ssh_local_port').value = 3307;
+                document.getElementById('ssh_remote_host').value = 'localhost';
+                document.getElementById('ssh_remote_port').value = 3306;
+                toggleSSHTunnelInputs(false);
+            }
+
             // tally
             document.getElementById('tally_definition').value = respData.tally.definition;
             document.getElementById('tally_server').value = respData.tally.server;
@@ -276,7 +396,7 @@
                 document.getElementById('tally_fromdate').value = respData.tally.fromdate;
                 document.getElementById('tally_todate').value = respData.tally.todate;
                 document.getElementById('tally_period_custom').checked = true;
-                document.getElementById('tally_period_auto').checked = false;
+                document.getElementById('tally_period_auto').removeAttribute('checked');
                 document.getElementById('tally_period_custom').dispatchEvent(new Event('change'));
             }
             else {
@@ -397,6 +517,7 @@
             if (document.readyState == "complete") {
                 assignCurrentFinancialYear();
                 populateCompanyListSuggesation();
+                toggleSSHTunnelInputs(false); // Initialize SSH tunnel inputs as disabled
             }
         }
     </script>
@@ -490,6 +611,70 @@
                             <option value="insert">Insert</option>
                             <option value="file" selected>File</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+            <div id="pnlSSHTunnel" class="mt-5">
+                <div class="mb-3">
+                    <h4>SSH Tunnel Configuration</h4>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_tunnel_enabled" class="col-sm-3 col-form-label">Enable SSH Tunnel</label>
+                    <div class="col-sm-9">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ssh_tunnel_enabled" onchange="ssh_tunnel_enabled_onchange(this)">
+                            <label class="form-check-label" for="ssh_tunnel_enabled">
+                                Use SSH tunnel to connect to database
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_host" class="col-sm-3 col-form-label">SSH Host</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="ssh_host" placeholder="192.168.1.100" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_port" class="col-sm-3 col-form-label">SSH Port</label>
+                    <div class="col-sm-9">
+                        <input type="number" class="form-control" id="ssh_port" value="22" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_username" class="col-sm-3 col-form-label">SSH Username</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="ssh_username" placeholder="ubuntu_user" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_password" class="col-sm-3 col-form-label">SSH Password</label>
+                    <div class="col-sm-9">
+                        <input type="password" class="form-control" id="ssh_password" placeholder="Leave empty if using private key" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_private_key" class="col-sm-3 col-form-label">Private Key</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control" id="ssh_private_key" rows="8" placeholder="Paste your private key here (optional)" disabled></textarea>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_local_port" class="col-sm-3 col-form-label">Local Port</label>
+                    <div class="col-sm-9">
+                        <input type="number" class="form-control" id="ssh_local_port" value="3307" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_remote_host" class="col-sm-3 col-form-label">Remote Host</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="ssh_remote_host" value="localhost" disabled>
+                    </div>
+                </div>
+                <div class="mb-2 form-group row">
+                    <label for="ssh_remote_port" class="col-sm-3 col-form-label">Remote Port</label>
+                    <div class="col-sm-9">
+                        <input type="number" class="form-control" id="ssh_remote_port" value="3306" disabled>
                     </div>
                 </div>
             </div>
